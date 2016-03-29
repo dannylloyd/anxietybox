@@ -1,3 +1,5 @@
+#Currently converting this project to .net and sql server. It's a mess.
+
 # AnxietyBox
 
 This is the Clojure project code to run anxietybox.com.
