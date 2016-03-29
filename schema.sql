@@ -1,42 +1,96 @@
-DROP TABLE IF EXISTS account CASCADE;
-DROP TABLE IF EXISTS anxiety CASCADE;
-DROP TABLE IF EXISTS reply CASCADE;
+USE [AnxietyBox]
+GO
+/****** Object:  Table [dbo].[accounts]    Script Date: 3/29/2016 9:15:14 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[accounts](
+	[created_time] [datetime] NOT NULL,
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[name] [varchar](100) NOT NULL,
+	[email] [varchar](100) NOT NULL,
+	[count] [int] NOT NULL,
+	[confirm] [uniqueidentifier] NOT NULL,
+	[active] [bit] NOT NULL,
+ CONSTRAINT [PK_accounts] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
 
-DROP TABLE IF EXISTS accounts CASCADE;
-DROP TABLE IF EXISTS anxieties CASCADE;
-DROP TABLE IF EXISTS replies CASCADE;
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[anxieties]    Script Date: 3/29/2016 9:15:14 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[anxieties](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[account_id] [int] NOT NULL,
+	[tracker] [uniqueidentifier] NOT NULL,
+	[description] [varchar](max) NOT NULL,
+ CONSTRAINT [PK_anxieties] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+GO
+SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[replies]    Script Date: 3/29/2016 9:15:14 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[replies](
+	[created_time] [datetime] NOT NULL,
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[account_id] [int] NOT NULL,
+	[anxiety_id] [int] NOT NULL,
+	[description] [varchar](max) NOT NULL,
+ CONSTRAINT [PK_replies] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 
--- The account of a user
-CREATE TABLE accounts (
-       created_time TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
-       id SERIAL PRIMARY KEY,
-       name VARCHAR(100) NOT NULL,
-       email VARCHAR(100) UNIQUE NOT NULL,
-       count INT NOT NULL DEFAULT 0,
-       confirm uuid DEFAULT UUID_GENERATE_V4(),
-       active BOOLEAN DEFAULT FALSE
-);
-
-CREATE UNIQUE INDEX lower_email_index ON accounts (lower(email));
-CREATE UNIQUE INDEX confirm_index ON accounts (confirm);
-
--- Track anxieties
-CREATE TABLE anxieties (
-       id SERIAL PRIMARY KEY,
-       account_id int REFERENCES accounts(id) ON DELETE CASCADE,
-       tracker uuid DEFAULT UUID_GENERATE_V4(),
-       description text UNIQUE NOT NULL
-);
-
-CREATE UNIQUE INDEX track_index ON accounts (confirm);
-
--- Track replies
-CREATE TABLE replies (
-       created_time TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
-       id SERIAL PRIMARY KEY,
-       account_id int REFERENCES accounts(id),
-       anxiety_id int REFERENCES anxieties(id) ON DELETE CASCADE,
-       description text
-);
+GO
+SET ANSI_PADDING OFF
+GO
+ALTER TABLE [dbo].[accounts] ADD  CONSTRAINT [DF_accounts_created_time]  DEFAULT (getdate()) FOR [created_time]
+GO
+ALTER TABLE [dbo].[accounts] ADD  CONSTRAINT [DF_accounts_count]  DEFAULT ((0)) FOR [count]
+GO
+ALTER TABLE [dbo].[accounts] ADD  CONSTRAINT [DF_accounts_confirm2]  DEFAULT (newid()) FOR [confirm]
+GO
+ALTER TABLE [dbo].[accounts] ADD  CONSTRAINT [DF_accounts_active]  DEFAULT ((0)) FOR [active]
+GO
+ALTER TABLE [dbo].[anxieties] ADD  CONSTRAINT [DF_anxieties_tracker]  DEFAULT (newid()) FOR [tracker]
+GO
+ALTER TABLE [dbo].[replies] ADD  CONSTRAINT [DF_replies_created_time]  DEFAULT (getdate()) FOR [created_time]
+GO
+ALTER TABLE [dbo].[anxieties]  WITH CHECK ADD  CONSTRAINT [FK_anxieties_accounts] FOREIGN KEY([account_id])
+REFERENCES [dbo].[accounts] ([id])
+GO
+ALTER TABLE [dbo].[anxieties] CHECK CONSTRAINT [FK_anxieties_accounts]
+GO
+ALTER TABLE [dbo].[replies]  WITH CHECK ADD  CONSTRAINT [FK_replies_accounts] FOREIGN KEY([account_id])
+REFERENCES [dbo].[accounts] ([id])
+GO
+ALTER TABLE [dbo].[replies] CHECK CONSTRAINT [FK_replies_accounts]
+GO
+ALTER TABLE [dbo].[replies]  WITH CHECK ADD  CONSTRAINT [FK_replies_anxieties] FOREIGN KEY([anxiety_id])
+REFERENCES [dbo].[anxieties] ([id])
+GO
+ALTER TABLE [dbo].[replies] CHECK CONSTRAINT [FK_replies_anxieties]
+GO
